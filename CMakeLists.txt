@@ -13,3 +13,5 @@ file(GLOB SOURCES "src/*.cpp")
 add_compile_options(-Wall -Wextra -Werror -Wshadow -pedantic)
 add_executable(qwk ${SOURCES})
 target_link_libraries(qwk Boost::program_options)
+
+install(TARGETS qwk DESTINATION bin)

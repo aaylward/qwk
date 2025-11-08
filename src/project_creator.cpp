@@ -1,7 +1,7 @@
-#include <iostream>
+#include "project_creator.h"
 #include <filesystem>
 #include <fstream>
-#include "project_creator.h"
+#include <iostream>
 #include <string>
 
 std::string qwk::ProjectCreator::write_contents() {
@@ -16,9 +16,13 @@ std::string qwk::ProjectCreator::write_contents() {
   contents += "add_executable(" + o->project + " ${SOURCES})\n";
 
   if (o->parser) {
-    contents += "find_package(Boost " + o->boost_version + " COMPONENTS program_options REQUIRED)\n\n";
-    contents += "target_link_libraries(" + o->project + " Boost::program_options)\n\n";
+    contents += "find_package(Boost " + o->boost_version +
+                " COMPONENTS program_options REQUIRED)\n\n";
+    contents +=
+        "target_link_libraries(" + o->project + " Boost::program_options)\n\n";
   }
+
+  contents += "\ninstall(TARGETS " + o->project + " DESTINATION bin)\n";
 
   return contents;
 }
@@ -41,13 +45,24 @@ bool qwk::ProjectCreator::write_project_to_disc() {
   c << contents;
 
   std::ofstream b(o->project + "/build.sh");
-  b << "#/usr/bin/env bash\n\nmkdir build\ncd build\ncmake ..\nmake\n";
+  b << "#/usr/bin/env bash\n\ncmake -Bbuild\ncmake --build build\n";
   b.close();
 
-  fs::permissions(o->project + "/build.sh", fs::perms::owner_exec, fs::perm_options::add);
+  fs::permissions(o->project + "/build.sh", fs::perms::owner_exec,
+                  fs::perm_options::add);
+
+  std::ofstream i(o->project + "/install.sh");
+  i << "#/usr/bin/env bash\n\ncmake -Bbuild\ncmake --build build\ncmake "
+       "--install build\n";
+  i.close();
+
+  fs::permissions(o->project + "/install.sh", fs::perms::owner_exec,
+                  fs::perm_options::add);
 
   std::ofstream f(o->project + "/src/" + o->project + ".cpp");
-  f << "#include <iostream>\n\nint main() {\n  std::cout << \"sup.\" << std::endl;\n}" << std::endl;
+  f << "#include <iostream>\n\nint main() {\n  std::cout << \"sup.\" << "
+       "std::endl;\n}"
+    << std::endl;
 
   return 0;
 }
